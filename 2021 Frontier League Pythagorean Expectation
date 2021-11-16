@@ -1,0 +1,50 @@
+### Frontier League Pythagorean Theorem Work ###
+library(tidyverse)
+library(ggrepel)
+library(formattable)
+# Some of the teams played different amount of games
+
+# set exponent to 1.86
+x <- 1.86
+# test run with Joliet Slammers
+RS <- 386
+RA <- 505
+PE_WP <- RS^x / (RS^x + RA^x)
+PE_WP
+# Slammers PE_WP was .377; they actually overperformed this season
+# predict final record
+(.377) * 89
+# predicted to have 33 wins, but won 2 more than predicted
+
+# Add Pyth_Exp winning pct column to dataframe
+options(digits =3)
+FLStandings_2021 <- FL_2021_Standings %>%
+  mutate(Pyth_Exp = RS^x / (RS^x + RA^x))
+View(FLStandings_2021)
+
+# Add projected wins to data
+FLStandings_2021 <- FLStandings_2021 %>%
+  mutate(Proj_Wins = Pyth_Exp * (W + L)) # multiply Pyth_exp by total games played
+
+# Graphical relationship of run differential and winning percentage
+Graph <- ggplot(FLStandings_2021, aes(Run_Diff, W_Pct)) +
+  geom_point() +
+  labs(x = "Run Differential",
+       y = "Winning Percentage",
+       title = "Run Differential & Winning Percentage",
+       subtitle = "Frontier League, Summer 2021") +
+  theme_bw() +
+  geom_label_repel(data = FLStandings_2021, aes(label = Team), size = 3,
+                   min.segment.length = unit(0, 'lines')) +
+  stat_smooth(method = lm)
+Graph
+
+formattable(FLStandings_2021 %>%
+              select(Team, W, L, W_Pct, Pyth_Exp, Proj_Wins) %>%
+              arrange(desc(Pyth_Exp)),
+            align = c("l", "c", "c", "c", "c", "r"))
+
+# Actual 2021 Frontier League Standings
+formattable(FL_2021_Standings %>%
+              arrange(desc(W_Pct)),
+            align = c("l", "c", "c", "c", "c", "c", "r"))
