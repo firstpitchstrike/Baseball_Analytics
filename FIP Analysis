@@ -1,0 +1,57 @@
+I wanted to look at the FIPs (Fielding Independent Pitching) for pitchers in the Frontier League. Using data from the 2021 season, I specifically looked
+at how pitchers with more than 100 innings pitched performed. FIP is a useful starting point for pitching performance analysis, but by no means perfect.
+It only looks at those events and outcomes that are in a pitcher's control, so it theoretically removes the random chance and luck involved with balls that are
+hit into play.
+
+### Frontier League FIP Leaders
+library(tidyverse)
+library(formattable)
+options(digits = 3)
+
+# FIP Constant = lgERA – (((13*lgHR)+(3*(lgBB+lgHBP))-(2*lgK))/lgIP)
+FL_ERA <- 4.64
+FL_HR <- 1119
+FL_BB <- 4724
+FL_HBP <- 879
+FL_IP <- 11323.1
+FL_K <- 10124
+
+FIP_Constant <- FL_ERA - (((13*FL_HR) + (3*(FL_BB+FL_HBP)) - (2*FL_K)) / FL_IP)
+FIP_Constant
+
+# Find FIP Leaders
+# FIP = ((13*HR)+(3*(BB+HBP))-(2*K))/IP + constant
+FL_Pitching_2021 <- X2021_FL_Pitching %>%
+  mutate(FIP = ((13*HR) + (3*(BB+HBP)) - (2*SO))/IP + FIP_Constant)
+View(FL_Pitching_2021)
+
+FIP_Leaders <- FL_Pitching_2021 %>%
+  select(Team, Name, W, L, ERA, IP, WHIP, HR, BB, HBP, SO, FIP)
+View(FIP_Leaders)
+
+# Ensure accuracy of FIP
+Zac_Wescott_FIP <- ((13*8) + (3*(27+10)) - (2*103))/123 + FIP_Constant
+Zac_Wescott_FIP
+
+summary(FIP_Leaders)
+class(FIP_Leaders$IP)
+# Pitchers who threw 100 innings or more
+head(FIP_Leaders,17)
+install.packages("gt")
+library(gt)    
+install.packages("glue")
+library(glue)
+library(tidyverse)
+Top_FIP <- FIP_Leaders %>%
+  arrange(desc(IP))
+View(Top_FIP)  
+Top_FIP <- Top_FIP %>%
+  filter(IP > 100)
+Top_FIP %>%
+  select(Team, Name, W, L, ERA, IP, FIP) %>%
+  arrange(FIP) %>%
+  gt() %>%
+  tab_header(
+    title = "Frontier League FIP",
+    subtitle = "100 Innings Pitched"
+  ) 
